@@ -19,7 +19,7 @@ class Settings:
 
     # OpenRouter
     openrouter_api_keys: List[str] = field(default_factory=list)
-    openrouter_model: str = "nvidia/llama-3.1-nemotron-ultra-253b-v1:free"
+    openrouter_model: str = "qwen/qwen-2.5-7b-instruct:free"
     openrouter_base_url: str = "https://openrouter.ai/api/v1/chat/completions"
 
     # Risk thresholds

@@ -87,6 +87,21 @@ def run_terraform_plan_node(state: AgentState) -> Dict:
     exit_code: int = result["exit_code"]
     has_drift: bool = exit_code == 2
 
+    # CRITICAL DEBUG: Always log the exit code
+    logger.info("===== TERRAFORM PLAN EXIT CODE: %d =====", exit_code)
+    logger.info("===== STDOUT LENGTH: %d chars =====", len(result["stdout"]))
+    logger.info("===== STDERR LENGTH: %d chars =====", len(result["stderr"]))
+    
+    # Log first 500 chars of stdout to see what terraform is saying
+    if result["stdout"]:
+        logger.info("===== TERRAFORM STDOUT (first 500 chars) =====")
+        logger.info(result["stdout"][:500])
+    
+    # Log stderr if present
+    if result["stderr"]:
+        logger.info("===== TERRAFORM STDERR =====")
+        logger.info(result["stderr"][:500])
+
     update: Dict = {
         "plan_exit_code": exit_code,
         "plan_output": result["stdout"],

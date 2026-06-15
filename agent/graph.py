@@ -191,7 +191,14 @@ if __name__ == "__main__":
         "run_timestamp": "",
     }
 
-    logger.info("Starting Self-Healing Terraform Drift Detection Agent.")
+    logger.info("="*80)
+    logger.info("===== STARTING DRIFT DETECTION AGENT - VERSION WITH DEBUG LOGGING =====")
+    logger.info("===== Terraform directory: %s =====", terraform_dir)
+    logger.info("="*80)
+    
     final_state = app.invoke(initial_state)
-    logger.info("Agent finished. Final status: %s", final_state.get("final_status"))
+    
+    logger.info("="*80)
+    logger.info("===== AGENT FINISHED - Final status: %s =====", final_state.get("final_status"))
+    logger.info("="*80)
     sys.exit(0 if final_state.get("final_status") != "ERROR" else 1)

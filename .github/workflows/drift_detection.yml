@@ -1,9 +1,9 @@
 name: Terraform Drift Detection
-# Last updated: 2026-06-15 - Runs every 2 minutes
+# Runs every 15 minutes to detect infrastructure drift
 
 on:
   schedule:
-    - cron: "*/2 * * * *"   # Every 2 minutes
+    - cron: "*/15 * * * *"   # Every 15 minutes (reliable on GitHub free tier)
   workflow_dispatch:
     inputs:
       reason:

@@ -52,13 +52,13 @@ class Settings:
     def __post_init__(self) -> None:
         """Load values from environment after dataclass initialisation."""
         self.openrouter_api_keys = [
-            key
+            key.strip()
             for key in [
                 os.getenv("OPENROUTER_API_KEY_1", ""),
                 os.getenv("OPENROUTER_API_KEY_2", ""),
                 os.getenv("OPENROUTER_API_KEY_3", ""),
             ]
-            if key
+            if key and key.strip()
         ]
         self.openrouter_model = os.getenv(
             "OPENROUTER_MODEL", self.openrouter_model

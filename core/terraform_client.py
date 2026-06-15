@@ -89,17 +89,32 @@ class TerraformClient:
         
         # Parse the plan summary to determine if there are changes
         import re
+        
+        # First try to find the Plan: summary line
         plan_summary_match = re.search(r'Plan: (\d+) to add, (\d+) to change, (\d+) to destroy\.', plan_result["stdout"])
+        
+        has_changes = False
         if plan_summary_match:
             to_add = int(plan_summary_match.group(1))
             to_change = int(plan_summary_match.group(2))
             to_destroy = int(plan_summary_match.group(3))
             has_changes = (to_add + to_change + to_destroy) > 0
+            logger.info("DEBUG | Found Plan summary: %d add, %d change, %d destroy", to_add, to_change, to_destroy)
+        else:
+            # Fallback: look for resource change indicators
+            will_be_created = len(re.findall(r'will be created', plan_result["stdout"]))
+            will_be_updated = len(re.findall(r'will be updated', plan_result["stdout"]))
+            will_be_destroyed = len(re.findall(r'will be destroyed', plan_result["stdout"]))
+            must_be_replaced = len(re.findall(r'must be replaced', plan_result["stdout"]))
             
-            # Override exit code if we detect changes in the plan output
-            if has_changes and plan_result["exit_code"] == 0:
-                logger.warning("WORKAROUND: Detected changes in plan output but exit code was 0. Overriding to exit code 2.")
-                plan_result["exit_code"] = 2
+            has_changes = (will_be_created + will_be_updated + will_be_destroyed + must_be_replaced) > 0
+            logger.info("DEBUG | Counted resource changes: %d created, %d updated, %d destroyed, %d replaced", 
+                       will_be_created, will_be_updated, will_be_destroyed, must_be_replaced)
+        
+        # Override exit code if we detect changes in the plan output
+        if has_changes and plan_result["exit_code"] == 0:
+            logger.warning("WORKAROUND: Detected changes in plan output but exit code was 0. Overriding to exit code 2.")
+            plan_result["exit_code"] = 2
         
         return {
             "exit_code": plan_result["exit_code"],

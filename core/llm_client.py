@@ -112,12 +112,23 @@ class OpenRouterClient:
             "HTTP-Referer": "https://github.com/self-healing-terraform",
             "X-Title": "Self-Healing Terraform Agent",
         }
-        return requests.post(
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Making OpenRouter API request to: %s", settings.openrouter_base_url)
+        logger.info("Using model: %s", settings.openrouter_model)
+        
+        response = requests.post(
             settings.openrouter_base_url,
             headers=headers,
             data=json.dumps(payload),
             timeout=120,
         )
+        
+        if response.status_code != 200:
+            logger.error("OpenRouter API error: %d - %s", response.status_code, response.text[:500])
+        
+        return response
 
     @staticmethod
     def _extract_text(response_json: dict) -> str:

@@ -45,6 +45,13 @@ jobs:
           echo "Current commit message: $(git log -1 --pretty=%B)"
           echo "Listing agent files to verify latest code:"
           head -20 agent/graph.py
+      
+      - name: Check S3 state file timestamp
+        run: |
+          echo "Checking S3 state file..."
+          aws s3 ls s3://terraform-state-drift-agent-478468758108/drift-agent/ --recursive
+          echo "Last modified time of state file:"
+          aws s3api head-object --bucket terraform-state-drift-agent-478468758108 --key drift-agent/terraform.tfstate --query 'LastModified' --output text
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -65,6 +72,15 @@ jobs:
           # Fallback to static credentials if OIDC role not configured
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      
+      - name: Debug - Check actual AWS resources
+        run: |
+          echo "=== Checking EC2 instance state ==="
+          aws ec2 describe-instances --instance-ids i-0093b8cde7603a295 --region us-east-1 --query "Reservations[0].Instances[0].[InstanceType,State.Name]" --output text
+          echo "=== Checking Security Group rules ==="
+          aws ec2 describe-security-groups --group-ids sg-065cb61b64417f1a4 --region us-east-1 --query "SecurityGroups[0].IpPermissions[*].[IpProtocol,FromPort,ToPort,IpRanges[0].CidrIp]" --output text
+          echo "=== Checking S3 state file timestamp ==="
+          aws s3api head-object --bucket terraform-state-drift-agent-478468758108 --key drift-agent/terraform.tfstate --query 'LastModified' --output text
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt

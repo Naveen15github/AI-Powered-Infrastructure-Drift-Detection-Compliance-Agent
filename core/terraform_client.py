@@ -37,6 +37,9 @@ class TerraformClient:
               1 = error occurred
               2 = changes detected (drift)
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         tf_path = str(Path(terraform_dir).resolve())
 
         # Always init first so providers are available
@@ -58,6 +61,27 @@ class TerraformClient:
             cwd=tf_path,
             timeout=settings.terraform_timeout_plan,
         )
+
+        # DEBUG: Log the exact exit code and output summary
+        logger.info("DEBUG | terraform plan exit_code=%d", plan_result["exit_code"])
+        logger.info("DEBUG | terraform plan stdout length=%d chars", len(plan_result["stdout"]))
+        logger.info("DEBUG | terraform plan stderr length=%d chars", len(plan_result["stderr"]))
+        
+        # Log a snippet of the plan output to see if it contains "will be"
+        stdout_lower = plan_result["stdout"].lower()
+        if "will be created" in stdout_lower or "will be updated" in stdout_lower or "will be destroyed" in stdout_lower:
+            logger.info("DEBUG | Plan output contains change keywords")
+        else:
+            logger.info("DEBUG | Plan output does NOT contain change keywords")
+        
+        # Log the Plan: summary line if present
+        import re
+        plan_summary_match = re.search(r'Plan: (\d+) to add, (\d+) to change, (\d+) to destroy\.', plan_result["stdout"])
+        if plan_summary_match:
+            logger.info("DEBUG | Plan summary: %s to add, %s to change, %s to destroy",
+                       plan_summary_match.group(1), plan_summary_match.group(2), plan_summary_match.group(3))
+        else:
+            logger.info("DEBUG | No 'Plan:' summary line found in output")
 
         # exit code 2 means changes; not a failure
         success = plan_result["exit_code"] in (0, 2)

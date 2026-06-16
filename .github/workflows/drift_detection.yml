@@ -78,6 +78,13 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
       
+      - name: Sanitize AWS credentials
+        run: |
+          # Strip any whitespace from AWS credentials
+          echo "AWS_ACCESS_KEY_ID=$(echo '${{ secrets.AWS_ACCESS_KEY_ID }}' | tr -d '[:space:]')" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=$(echo '${{ secrets.AWS_SECRET_ACCESS_KEY }}' | tr -d '[:space:]')" >> $GITHUB_ENV
+          echo "AWS credentials sanitized and exported to environment"
+      
       - name: Debug - Check environment variables
         run: |
           echo "=== Environment Variable Check ==="
@@ -119,11 +126,20 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-east-1
           AWS_DEFAULT_REGION: us-east-1
           TERRAFORM_DIR: terraform
+      
+      - name: Debug - Show AWS credential format issues if any
+        if: failure()
+        run: |
+          echo "Checking for whitespace issues in AWS credentials..."
+          if [[ "$AWS_ACCESS_KEY_ID" =~ [[:space:]] ]]; then
+            echo "WARNING: AWS_ACCESS_KEY_ID contains whitespace characters!"
+          fi
+          if [[ "$AWS_SECRET_ACCESS_KEY" =~ [[:space:]] ]]; then
+            echo "WARNING: AWS_SECRET_ACCESS_KEY contains whitespace characters!"
+          fi
 
       - name: Upload Terraform plan artifact
         if: always()

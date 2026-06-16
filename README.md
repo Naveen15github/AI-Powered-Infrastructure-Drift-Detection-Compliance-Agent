@@ -6,15 +6,7 @@
 
 ## 🏗️ Architecture Diagram
 
-<!-- ✏️ REPLACE THIS BLOCK WITH YOUR ARCHITECTURE DIAGRAM IMAGE -->
-<p align="center">
-  <img src="./screenshots/architecture.png" alt="Architecture Diagram" width="900"/>
-  <br/>
-  <em>System Architecture — Infrastructure Drift Detection & Compliance Agent</em>
-</p>
-
-> **Note:** Place your architecture diagram as `screenshots/architecture.png` in this repository and it will render above automatically.
-
+![Architecture Diagram](https://github.com/Naveen15github/Infrastructure-Drift-Detection-Compliance-AI-Agent/blob/e15ed7558d4a5844f2d907be9b89a02239ada7f0/ad.png)
 ---
 
 ## 📌 Table of Contents

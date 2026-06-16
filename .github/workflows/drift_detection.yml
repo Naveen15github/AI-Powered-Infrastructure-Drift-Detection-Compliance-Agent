@@ -30,7 +30,8 @@ jobs:
       OPENROUTER_API_KEY_2: ${{ secrets.OPENROUTER_API_KEY_2 }}
       OPENROUTER_API_KEY_3: ${{ secrets.OPENROUTER_API_KEY_3 }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
 
     steps:
       - name: Checkout repository

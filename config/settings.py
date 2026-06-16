@@ -17,7 +17,12 @@ load_dotenv()
 class Settings:
     """Application-wide configuration loaded from environment variables."""
 
-    # OpenRouter
+    # Groq API (replacing OpenRouter)
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.1-8b-instant"
+    groq_base_url: str = "https://api.groq.com/openai/v1/chat/completions"
+    
+    # Legacy OpenRouter (deprecated, keeping for backward compatibility)
     openrouter_api_keys: List[str] = field(default_factory=list)
     openrouter_model: str = "meta-llama/llama-3.2-1b-instruct:free"
     openrouter_base_url: str = "https://openrouter.ai/api/v1/chat/completions"
@@ -51,6 +56,12 @@ class Settings:
 
     def __post_init__(self) -> None:
         """Load values from environment after dataclass initialisation."""
+        # Groq API (primary)
+        self.groq_api_key = os.getenv("GROQ_API_KEY", "")
+        self.groq_model = os.getenv("GROQ_MODEL", self.groq_model)
+        self.groq_base_url = os.getenv("GROQ_BASE_URL", self.groq_base_url)
+        
+        # OpenRouter (fallback)
         self.openrouter_api_keys = [
             key.strip()
             for key in [

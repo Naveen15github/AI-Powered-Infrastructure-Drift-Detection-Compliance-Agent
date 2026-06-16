@@ -1,5 +1,5 @@
 """
-OpenRouter API client with automatic key rotation on rate-limit and token-limit errors.
+Groq API client for LLM completions.
 
 Provides a simple complete() interface used by the agent's risk analysis node.
 """
@@ -14,32 +14,30 @@ from config.settings import settings
 
 
 class OpenRouterClient:
-    """HTTP client for the OpenRouter chat completions API.
+    """HTTP client for the Groq chat completions API.
 
-    Automatically rotates through up to three API keys when HTTP 429 (rate limit)
-    or HTTP 402 (token/credit limit) responses are received.
+    Uses Groq's fast inference for risk analysis.
     """
 
-    def __init__(self, api_keys: List[str] | None = None) -> None:
-        """Initialise with a list of API keys.
+    def __init__(self, api_key: str | None = None) -> None:
+        """Initialise with Groq API key.
 
         Args:
-            api_keys: Optional override list of keys. Defaults to settings.openrouter_api_keys.
+            api_key: Optional override. Defaults to settings.groq_api_key.
         """
-        self._keys: List[str] = api_keys or settings.openrouter_api_keys
-        if not self._keys:
+        self._key: str = api_key or settings.groq_api_key
+        if not self._key:
             raise ValueError(
-                "No OpenRouter API keys configured. "
-                "Set OPENROUTER_API_KEY_1, _2, or _3 in your environment."
+                "No Groq API key configured. "
+                "Set GROQ_API_KEY in your environment."
             )
-        self._last_used_key_index: int = -1
 
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
 
     def complete(self, system_prompt: str, user_prompt: str) -> str:
-        """Send a chat completion request, rotating keys on 429/402.
+        """Send a chat completion request to Groq.
 
         Args:
             system_prompt: Instruction context for the model.
@@ -49,46 +47,22 @@ class OpenRouterClient:
             Raw text content from the first assistant message.
 
         Raises:
-            RuntimeError: When all configured API keys have been exhausted.
+            RuntimeError: When the API call fails.
         """
-        last_error: Exception | None = None
-
-        for index, key in enumerate(self._keys):
-            self._last_used_key_index = index
-            try:
-                response = self._post(key, system_prompt, user_prompt)
-                status = response.status_code
-
-                if status in (429, 402):
-                    last_error = RuntimeError(
-                        f"Key index {index} returned HTTP {status}. Trying next key."
-                    )
-                    continue
-
-                response.raise_for_status()
-                raw_text = self._extract_text(response.json())
-                return self._strip_code_fences(raw_text)
-
-            except requests.RequestException as exc:
-                last_error = exc
-                continue
-
-        raise RuntimeError(
-            f"All {len(self._keys)} OpenRouter API keys failed. "
-            f"Last error: {last_error}"
-        )
-
-    @property
-    def last_used_key_index(self) -> int:
-        """Return the zero-based index of the last key that was attempted."""
-        return self._last_used_key_index
+        try:
+            response = self._post(self._key, system_prompt, user_prompt)
+            response.raise_for_status()
+            raw_text = self._extract_text(response.json())
+            return self._strip_code_fences(raw_text)
+        except requests.RequestException as exc:
+            raise RuntimeError(f"Groq API call failed: {exc}")
 
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
 
     def _post(self, api_key: str, system_prompt: str, user_prompt: str) -> requests.Response:
-        """Execute the HTTP POST to the OpenRouter completions endpoint.
+        """Execute the HTTP POST to the Groq completions endpoint.
 
         Args:
             api_key: Bearer token for authentication.
@@ -99,7 +73,7 @@ class OpenRouterClient:
             Raw requests.Response object.
         """
         payload = {
-            "model": settings.openrouter_model,
+            "model": settings.groq_model,
             "max_tokens": 1024,
             "messages": [
                 {"role": "system", "content": system_prompt},
@@ -109,24 +83,22 @@ class OpenRouterClient:
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://github.com/self-healing-terraform",
-            "X-Title": "Self-Healing Terraform Agent",
         }
         
         import logging
         logger = logging.getLogger(__name__)
-        logger.info("Making OpenRouter API request to: %s", settings.openrouter_base_url)
-        logger.info("Using model: %s", settings.openrouter_model)
+        logger.info("Making Groq API request to: %s", settings.groq_base_url)
+        logger.info("Using model: %s", settings.groq_model)
         
         response = requests.post(
-            settings.openrouter_base_url,
+            settings.groq_base_url,
             headers=headers,
             data=json.dumps(payload),
             timeout=120,
         )
         
         if response.status_code != 200:
-            logger.error("OpenRouter API error: %d - %s", response.status_code, response.text[:500])
+            logger.error("Groq API error: %d - %s", response.status_code, response.text[:500])
         
         return response
 
@@ -147,7 +119,7 @@ class OpenRouterClient:
             return response_json["choices"][0]["message"]["content"]
         except (KeyError, IndexError) as exc:
             raise ValueError(
-                f"Unexpected OpenRouter response shape: {response_json}"
+                f"Unexpected Groq response shape: {response_json}"
             ) from exc
 
     @staticmethod

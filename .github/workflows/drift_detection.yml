@@ -26,9 +26,7 @@ jobs:
       contents: read
 
     env:
-      OPENROUTER_API_KEY_1: ${{ secrets.OPENROUTER_API_KEY_1 }}
-      OPENROUTER_API_KEY_2: ${{ secrets.OPENROUTER_API_KEY_2 }}
-      OPENROUTER_API_KEY_3: ${{ secrets.OPENROUTER_API_KEY_3 }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       AWS_REGION: us-east-1
       AWS_DEFAULT_REGION: us-east-1
